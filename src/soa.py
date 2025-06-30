@@ -548,7 +548,7 @@ def run_cli():
             if options.filter is not None:
                 attributes: list = [x.strip() for x in options.filter.split(",")]
             else:
-                attributes = ["samaccountname", "distinguishedName", "objectsid"]
+                attributes = None
                 
             client.pull(current_query, attributes, print_incrementally=True)
 

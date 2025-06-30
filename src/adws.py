@@ -335,15 +335,15 @@ class ADWSConnect:
         Returns:
             str or None: the enumeration context, or None in error
         """
-
-        """Format passed attributes"""
         fAttributes: str = ""
-        for attr in attributes:
-            fAttributes += (
-                "<ad:SelectionProperty>addata:{attr}</ad:SelectionProperty>\n".format(
-                    attr=attr
+        """Format passed attributes"""
+        if attributes is not None:
+            for attr in attributes:
+                fAttributes += (
+                    "<ad:SelectionProperty>addata:{attr}</ad:SelectionProperty>\n".format(
+                        attr=attr
+                    )
                 )
-            )
 
         query_vars = {
             "uuid": str(uuid4()),
