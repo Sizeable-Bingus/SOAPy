@@ -74,7 +74,7 @@ def getAccountDN(
         "distinguishedname",
     ]
 
-    pull_et = pull_client.pull(query=get_account_query, attributes=attributes)
+    pull_et = pull_client.pull(query=get_account_query, basedn=None, attributes=attributes)
 
     for item in pull_et.findall(".//addata:user", namespaces=NAMESPACES):
         distinguishedName_elem = item.find(
@@ -150,7 +150,7 @@ def set_asrep(
         "distinguishedName",
     ]
 
-    pull_et = pull_client.pull(query=get_accounts_queries, attributes=attributes)
+    pull_et = pull_client.pull(query=get_accounts_queries, basedn=None, attributes=attributes)
     for item in pull_et.findall(".//addata:user", namespaces=NAMESPACES):
         uac = item.find(
             ".//addata:userAccountControl/ad:value",
@@ -224,7 +224,7 @@ def set_rbcd(
         "msds-allowedtoactonbehalfofotheridentity",
     ]
 
-    pull_et = pull_client.pull(query=get_accounts_queries, attributes=attributes)
+    pull_et = pull_client.pull(query=get_accounts_queries, basedn=None, attributes=attributes)
 
     target_sd: SR_SECURITY_DESCRIPTOR = _create_empty_sd()
     target_dn: str = ""
