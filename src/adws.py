@@ -649,6 +649,9 @@ class ADWSConnect:
                     ]
                     print(f"{name}: {' '.join(values)}")
             """
+        print(
+                ("--------------------")
+            )
 
     def put(
         self,
