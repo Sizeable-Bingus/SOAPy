@@ -322,7 +322,7 @@ class ADWSConnect:
         return nmf
 
     def _query_enumeration(
-        self, remoteName: str, nmf: ms_nmf.NMFConnection, query: str, attributes: list
+        self, remoteName: str, nmf: ms_nmf.NMFConnection, query: str, basedn: str, attributes: list
     ) -> str | None:
         """Send the query and set up an enumeration context for the results
 
@@ -330,6 +330,7 @@ class ADWSConnect:
             remoteName (str): remote server fqdn, used for soap addressing
             nmf (ms_nmf.NMFConnection): the transport to use
             query (str): the ldap query to use
+            basedn (str): The base objects distinguished name for the query
             attributes (list): ldap attributes to return
 
         Returns:
@@ -345,14 +346,18 @@ class ADWSConnect:
                     )
                 )
 
+        if basedn is None:
+            basedn = ",".join([f"DC={i}" for i in self._domain.split(".")])
+
         logging.info(f"Using query: {query}")
+        logging.info(f"Using distingushedName: {basedn}")
 
         query_vars = {
             "uuid": str(uuid4()),
             "fqdn": remoteName,
             "query": query,
             "attributes": fAttributes,
-            "baseobj": ",".join([f"DC={i}" for i in self._domain.split(".")]),
+            "baseobj": basedn,
         }
 
         enumeration = LDAP_QUERY_FSTRING.format(**query_vars)
@@ -506,6 +511,10 @@ class ADWSConnect:
             parse_values (bool): Parse attributes to readable format
         """
 
+        obj = et.findall(".//ad:value/../..", namespaces=NAMESPACES)
+        if not obj:
+            print("[-] No objects found")
+
         for item in et.findall(".//ad:value/../..", namespaces=NAMESPACES):
             synthetic_attributes = []
             
@@ -621,9 +630,6 @@ class ADWSConnect:
                 else:
                     object_values[name] = ", ".join(parsed if parsed else values)
 
-            if not object_values:
-                print("[-] No objects returned")
-                return
             format_str = f"{{}}: {{}}"
             print(
                 ("--------------------")
@@ -698,6 +704,7 @@ class ADWSConnect:
     def pull(
         self,
         query: str,
+        basedn: str,
         attributes: list,
         print_incrementally: bool = False,
         parse_values: bool = False
@@ -707,6 +714,7 @@ class ADWSConnect:
         Args:
             fqdn (str): the fqdn of the domain controller
             query (str): the ldap query as a string
+            baseobj (str): The base objects distinguished name for the query
             print_incrementally (bool): print the results as they come in
             parse_values (bool): When printing results parse to human readable values
 
@@ -720,6 +728,7 @@ class ADWSConnect:
             remoteName=self._fqdn,
             nmf=self._nmf,
             query=query,
+            basedn=basedn,
             attributes=attributes,
         )
         if enum_ctx is None:
