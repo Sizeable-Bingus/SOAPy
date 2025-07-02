@@ -1,27 +1,30 @@
 # Description
 SoaPy is a Proof of Concept (PoC) tool for conducting offensive  interaction with Active Directory Web Services (ADWS) from Linux hosts. SoaPy includes previously undeveloped custom python implementations of a collection of Microsoft protocols required for interaction with the ADWS service. This includes but is not limited to: NNS (.NET NegotiateStream Protocol), NMF (.NET Message Framing Protocol), and NBFSE (.NET Binary Format: SOAP Extension).
 
+SoaPy can be primarily utilized to interact with ADWS for stealthy recon over a proxy into an internal Active Directory environment. Additionally SoaPy can perform targeted DACL-focused post-exploitation over ADWS, including `servicePrincipalName` writing for targeted Kerberoasting, `DON’T_REQ_PREAUTH` writing for targeted ASREP-Roasting, and the ability to write to `msDs-AllowedToActOnBehalfOfOtherIdentity` for Resource-Based Constrained Delegation attacks. 
 
-SoaPy can be primarily utilized to interact with ADWS for stealthy enumeration over a proxy into an internal Active Directory environment. Additionally SoaPy can perform targeted exploitation over ADWS, including `servicePrincipalName` writing for targeted Kerberoasting, `DON’T_REQ_PREAUTH` writing for targeted ASREP-Roasting, and the ability to write to `msDs-AllowedToActOnBehalfOfOtherIdentity` for Resource-Based Constrained Delegation attacks. 
+![image](https://github.com/user-attachments/assets/e83a3e60-7aaf-4084-bcab-41e400d4055e)
 
-
+The blog detailing the original research largely from an engineering perspective can be found [here](https://www.ibm.com/think/x-force/stealthy-enumeration-of-active-directory-environments-through-adws)
 
 # Usage
-
 ```
-
 ███████╗ ██████╗  █████╗ ██████╗ ██╗   ██╗
 ██╔════╝██╔═══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝
 ███████╗██║   ██║███████║██████╔╝ ╚████╔╝ 
 ╚════██║██║   ██║██╔══██║██╔═══╝   ╚██╔╝  
 ███████║╚██████╔╝██║  ██║██║        ██║   
 ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝        ╚═╝   
-    
-usage: soapy [-h] [--debug] [--ts] [--hash nthash] [--users] [--computers] [--groups] [--constrained] [--unconstrained] [--spns] [--asreproastable] [--admins] [--rbcds]
-             [-q query] [--filter attr,attr,...] [--rbcd source] [--spn value] [--asrep] [--account account] [--remove]
+
+@_logangoins
+github.com/jlevere  
+          
+usage: soapy [-h] [--debug] [--ts] [-H nthash] [--users] [--computers] [--groups] [--constrained]
+             [--unconstrained] [--spns] [--asreproastable] [--admins] [--rbcds] [-q query] [-f attr,attr,...]
+             [-dn distinguishedname] [-p] [--rbcd source] [--spn value] [--asrep] [--account account] [--remove]
              connection
 
-Enumerate and write LDAP objects over ADWS using the SOAP protocol
+Perform AD reconnaisance and post-exploitation through ADWS from Linux
 
 positional arguments:
   connection            domain/username[:password]@<targetName or address>
@@ -30,7 +33,7 @@ options:
   -h, --help            show this help message and exit
   --debug               Turn DEBUG output ON
   --ts                  Adds timestamp to every logging output.
-  --hash nthash         Use an NT hash for authentication
+  -H, --hash nthash     Use an NT hash for authentication
 
 Enumeration:
   --users               Enumerate user objects
@@ -42,19 +45,24 @@ Enumeration:
   --asreproastable      Enumerate accounts with the DONT_REQ_PREAUTH flag set
   --admins              Enumerate high privilege accounts
   --rbcds               Enumerate accounts with msDs-AllowedToActOnBehalfOfOtherIdentity set
-  -q query, --query query
-                        Raw query to execute on the target
-  --filter attr,attr,...
+  -q, --query query     Raw query to execute on the target
+  -f, --filter attr,attr,...
                         Attributes to select from the objects returned, in a comma seperated list
+  -dn, --distinguishedname distinguishedname
+                        The root objects distinguishedName for the query
+  -p, --parse           Parse attributes to human readable format
 
 Writing:
-  --rbcd source         Operation to write or remove RBCD. Also used to pass in the source computer account used for the attack.
-  --spn value           Operation to write the servicePrincipalName attribute value, writes by default unless "--remove" is specified
-  --asrep               Operation to write the DONT_REQ_PREAUTH (0x400000) userAccountControl flag on a target object
+  --rbcd source         Operation to write or remove RBCD. Also used to pass in the source computer account used
+                        for the attack.
+  --spn value           Operation to write the servicePrincipalName attribute value, writes by default unless "
+                        --remove" is specified
+  --asrep               Operation to write the DONT_REQ_PREAUTH (0x400000) userAccountControl flag on a target
+                        object
   --account account     Account to preform an operation on
   --remove              Operarion to remove an attribute value based off an operation
-
 ```
+
 # Installation
 With `pipx`:
 ```
