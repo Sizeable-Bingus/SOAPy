@@ -310,7 +310,7 @@ github.com/jlevere
 
     parser = argparse.ArgumentParser(
         add_help=True,
-        description="Enumerate and write LDAP objects over ADWS using the SOAP protocol",
+        description="Perform AD reconnaisance and post-exploitation through ADWS from Linux ",
     )
     parser.add_argument(
         "connection",
