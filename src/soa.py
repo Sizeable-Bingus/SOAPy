@@ -303,7 +303,10 @@ def run_cli():
 ╚════██║██║   ██║██╔══██║██╔═══╝   ╚██╔╝  
 ███████║╚██████╔╝██║  ██║██║        ██║   
 ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝        ╚═╝   
-    """)
+
+@_logangoins
+github.com/jlevere  
+          """)
 
     parser = argparse.ArgumentParser(
         add_help=True,
