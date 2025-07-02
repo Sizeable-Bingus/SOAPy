@@ -391,6 +391,12 @@ def run_cli():
         help="Attributes to select from the objects returned, in a comma seperated list",
     )
     enum.add_argument(
+        "-dn", "--distinguishedname",
+        action="store",
+        metavar="distinguishedname",
+        help="The root objects distinguishedName for the query",
+    )
+    enum.add_argument(
         "-p", "--parse",
         action="store_true",
         help="Parse attributes to human readable format",
@@ -555,7 +561,7 @@ def run_cli():
             else:
                 attributes = None
             
-            client.pull(current_query, attributes, print_incrementally=True, parse_values=options.parse)
+            client.pull(current_query, options.distinguishedname, attributes, print_incrementally=True, parse_values=options.parse)
 
 
 if __name__ == "__main__":
