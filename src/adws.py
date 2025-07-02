@@ -307,7 +307,7 @@ class ADWSConnect:
         """
 
         server_address: tuple[str, int] = (remoteName, 9389)
-        logging.info(f"Connecting to {remoteName} for {self._resource}")
+        logging.info(f"Connecting to {remoteName} for resource:{self._resource}")
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(server_address)
@@ -344,6 +344,8 @@ class ADWSConnect:
                         attr=attr
                     )
                 )
+
+        logging.info(f"Using query: {query}")
 
         query_vars = {
             "uuid": str(uuid4()),
@@ -492,7 +494,7 @@ class ADWSConnect:
         return f"{value}{flag_results}"
 
     def _pretty_print_response(
-        self, et: ElementTree.Element, print_synthetic_vars: bool = False
+        self, et: ElementTree.Element, print_synthetic_vars: bool = False, parse_values: bool = False
     ) -> None:
         """Pretty print the xml ldap objects in the response.
 
@@ -501,13 +503,12 @@ class ADWSConnect:
         Args:
             et (ElementTree.Element): response xml element tree
             print_synthetic_vars (bool): print synthetic vars, see ([MS-ADDM]: 2.3.3)
+            parse_values (bool): Parse attributes to readable format
         """
 
         for item in et.findall(".//ad:value/../..", namespaces=NAMESPACES):
             synthetic_attributes = []
-            print(
-                ("--------------------")
-            )
+            
 
             object_values: dict[str, str] = {}
             for part in item.findall(".//ad:value/..", namespaces=NAMESPACES):
@@ -531,96 +532,107 @@ class ADWSConnect:
                         if sid in WELL_KNOWN_SIDS:
                             sid += f" Well known sid: {WELL_KNOWN_SIDS[sid]}"
                         parsed.append(sid)
-                """
-                elif syntax == "GeneralizedTimeString":
-                    parsed = [
-                        GeneralizedTime(value).asDateTime.astimezone().isoformat()
-                        for value in values
-                    ]
-                
-                if name in [
-                    "accountExpires",
-                    "lastLogoff",
-                    "badPasswordTime",
-                    "lastLogon",
-                    "pwdLastSet",
-                    "lastLogonTimestamp",
-                ]:
-                    for v in values:
-                        if int(v) == 0x0 or int(v) == 0x7FFFFFFFFFFFFFFF:
-                            parsed.append("none/never")
-                        else:
-                            us = int(v) / 10
-                            parsed.append(
-                                (
-                                    datetime.datetime(
-                                        1601, 1, 1, tzinfo=datetime.timezone.utc
-                                    )
-                                    + datetime.timedelta(microseconds=us)
-                                ).isoformat()
-                            )
-                """
                 if name in ["objectGUID"]:
                     parsed = [str(UUID(bytes_le=b64decode(value))) for value in values]
-                """
-                elif name == "userAccountControl":
-                    parsed = [
-                        self._format_flags(int(value), AccountPropertyFlag)
-                        for value in values
-                    ]
                 
-                if name == "sAMAccountType":
-                    parsed = [
-                        self._format_flags(int(value), SamAccountType)
-                        for value in values
-                    ]
-                elif name == "primaryGroupID":
-                    parsed = []
-                    for value in values:
-                        group = value
-                        if value in BUILT_IN_GROUPS:
-                            group += f" Well known group: {BUILT_IN_GROUPS[value]}"
-                        parsed.append(group)
-                elif name == "groupType":
-                    parsed = [
-                        self._format_flags(int(value), GroupTypeFlags)
-                        for value in values
-                    ]
-                
-                elif name == "instanceType":
-                    parsed = [
-                        self._format_flags(int(value), InstanceTypeFlags)
-                        for value in values
-                    ]
-                elif name == "systemFlags":
-                    parsed = [
-                        self._format_flags(int(value), SystemFlags) for value in values
-                    ]
-                
-                elif name == "msDS-AllowedToActOnBehalfOfOtherIdentity":
-                    parsed = []
-                    for value in values:
-                        sd = SR_SECURITY_DESCRIPTOR(data=b64decode(value))
-                        aces = [
-                            ace["Ace"]["Sid"].formatCanonical()
-                            for ace in sd["Dacl"].aces
-                            if ace["AceType"]
-                            in (
-                                ACCESS_ALLOWED_CALLBACK_OBJECT_ACE.ACE_TYPE,
-                                ACCESS_ALLOWED_ACE.ACE_TYPE,
-                                ACCESS_ALLOWED_CALLBACK_ACE.ACE_TYPE,
-                                ACCESS_ALLOWED_OBJECT_ACE.ACE_TYPE,
-                                SYSTEM_MANDATORY_LABEL_ACE.ACE_TYPE,
-                            )
+                if parse_values:
+                    if syntax == "GeneralizedTimeString":
+                        parsed = [
+                            GeneralizedTime(value).asDateTime.astimezone().isoformat()
+                            for value in values
                         ]
-                        parsed.append(f"{value} DACL ACE SIDs: {' '.join(aces)}")
-                """
-                object_values[name] = ", ".join(parsed if parsed else values)
+                    
+                    elif name in [
+                        "accountExpires",
+                        "lastLogoff",
+                        "badPasswordTime",
+                        "lastLogon",
+                        "pwdLastSet",
+                        "lastLogonTimestamp",
+                    ]:
+                        for v in values:
+                            if int(v) == 0x0 or int(v) == 0x7FFFFFFFFFFFFFFF:
+                                parsed.append("none/never")
+                            else:
+                                us = int(v) / 10
+                                parsed.append(
+                                    (
+                                        datetime.datetime(
+                                            1601, 1, 1, tzinfo=datetime.timezone.utc
+                                        )
+                                        + datetime.timedelta(microseconds=us)
+                                    ).isoformat()
+                                )
+                    
+                    elif name == "userAccountControl":
+                        parsed = [
+                            self._format_flags(int(value), AccountPropertyFlag)
+                            for value in values
+                        ]
+                    
+                    if name == "sAMAccountType":
+                        parsed = [
+                            self._format_flags(int(value), SamAccountType)
+                            for value in values
+                        ]
+                    elif name == "primaryGroupID":
+                        parsed = []
+                        for value in values:
+                            group = value
+                            if value in BUILT_IN_GROUPS:
+                                group += f" Well known group: {BUILT_IN_GROUPS[value]}"
+                            parsed.append(group)
+                    elif name == "groupType":
+                        parsed = [
+                            self._format_flags(int(value), GroupTypeFlags)
+                            for value in values
+                        ]
+                    
+                    elif name == "instanceType":
+                        parsed = [
+                            self._format_flags(int(value), InstanceTypeFlags)
+                            for value in values
+                        ]
+                    elif name == "systemFlags":
+                        parsed = [
+                            self._format_flags(int(value), SystemFlags) for value in values
+                        ]
+                    
+                    elif name == "msDS-AllowedToActOnBehalfOfOtherIdentity":
+                        parsed = []
+                        for value in values:
+                            sd = SR_SECURITY_DESCRIPTOR(data=b64decode(value))
+                            aces = [
+                                ace["Ace"]["Sid"].formatCanonical()
+                                for ace in sd["Dacl"].aces
+                                if ace["AceType"]
+                                in (
+                                    ACCESS_ALLOWED_CALLBACK_OBJECT_ACE.ACE_TYPE,
+                                    ACCESS_ALLOWED_ACE.ACE_TYPE,
+                                    ACCESS_ALLOWED_CALLBACK_ACE.ACE_TYPE,
+                                    ACCESS_ALLOWED_OBJECT_ACE.ACE_TYPE,
+                                    SYSTEM_MANDATORY_LABEL_ACE.ACE_TYPE,
+                                )
+                            ]
+                            parsed.append(f"{value} DACL ACE SIDs: {' '.join(aces)}")
+                
+                if parse_values and name == "nTSecurityDescriptor":
+                    continue
+                else:
+                    object_values[name] = ", ".join(parsed if parsed else values)
 
+            if not object_values:
+                print("[-] No objects returned")
+                return
             format_str = f"{{}}: {{}}"
+            print(
+                ("--------------------")
+            )
+
             for k, v in object_values.items():
                 print(format_str.format(k, v))
 
+            """
             if print_synthetic_vars:
                 for part in synthetic_attributes:
                     name = self._get_tag_name(part)
@@ -630,6 +642,7 @@ class ADWSConnect:
                         if value is not None and value.text
                     ]
                     print(f"{name}: {' '.join(values)}")
+            """
 
     def put(
         self,
@@ -687,6 +700,7 @@ class ADWSConnect:
         query: str,
         attributes: list,
         print_incrementally: bool = False,
+        parse_values: bool = False
     ) -> ElementTree.Element:
         """Makes an LDAP query using ADWS to the specified server
 
@@ -694,6 +708,7 @@ class ADWSConnect:
             fqdn (str): the fqdn of the domain controller
             query (str): the ldap query as a string
             print_incrementally (bool): print the results as they come in
+            parse_values (bool): When printing results parse to human readable values
 
         Returns:
             ElementTree.Element: The soap response as xml
@@ -720,14 +735,12 @@ class ADWSConnect:
             et, more_results = self._pull_results(
                 remoteName=self._fqdn, nmf=self._nmf, enum_ctx=enum_ctx
             )
-            if len(et.findall(".//wsen:Items", namespaces=NAMESPACES)) == 0:
-                logging.critical("No objects returned")
-            else:
-                for item in et.findall(".//wsen:Items", namespaces=NAMESPACES):
-                    results.append(item)
+
+            for item in et.findall(".//wsen:Items", namespaces=NAMESPACES):
+                results.append(item)
 
             if print_incrementally:
-                self._pretty_print_response(et)
+                self._pretty_print_response(et, parse_values=parse_values)
 
         return results
 
