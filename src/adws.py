@@ -506,8 +506,7 @@ class ADWSConnect:
         for item in et.findall(".//ad:value/../..", namespaces=NAMESPACES):
             synthetic_attributes = []
             print(
-                ("[+] Object Found: " + self._get_tag_name(item)),
-                end="\n",
+                ("--------------------")
             )
 
             object_values: dict[str, str] = {}
@@ -532,12 +531,13 @@ class ADWSConnect:
                         if sid in WELL_KNOWN_SIDS:
                             sid += f" Well known sid: {WELL_KNOWN_SIDS[sid]}"
                         parsed.append(sid)
+                """
                 elif syntax == "GeneralizedTimeString":
                     parsed = [
                         GeneralizedTime(value).asDateTime.astimezone().isoformat()
                         for value in values
                     ]
-
+                
                 if name in [
                     "accountExpires",
                     "lastLogoff",
@@ -559,14 +559,17 @@ class ADWSConnect:
                                     + datetime.timedelta(microseconds=us)
                                 ).isoformat()
                             )
-                elif name in ["objectGUID"]:
-                    parsed = [str(UUID(bytes=b64decode(value))) for value in values]
+                """
+                if name in ["objectGUID"]:
+                    parsed = [str(UUID(bytes_le=b64decode(value))) for value in values]
+                """
                 elif name == "userAccountControl":
                     parsed = [
                         self._format_flags(int(value), AccountPropertyFlag)
                         for value in values
                     ]
-                elif name == "sAMAccountType":
+                
+                if name == "sAMAccountType":
                     parsed = [
                         self._format_flags(int(value), SamAccountType)
                         for value in values
@@ -583,6 +586,7 @@ class ADWSConnect:
                         self._format_flags(int(value), GroupTypeFlags)
                         for value in values
                     ]
+                
                 elif name == "instanceType":
                     parsed = [
                         self._format_flags(int(value), InstanceTypeFlags)
@@ -592,6 +596,7 @@ class ADWSConnect:
                     parsed = [
                         self._format_flags(int(value), SystemFlags) for value in values
                     ]
+                
                 elif name == "msDS-AllowedToActOnBehalfOfOtherIdentity":
                     parsed = []
                     for value in values:
@@ -609,13 +614,12 @@ class ADWSConnect:
                             )
                         ]
                         parsed.append(f"{value} DACL ACE SIDs: {' '.join(aces)}")
+                """
+                object_values[name] = ", ".join(parsed if parsed else values)
 
-                object_values[name] = " ".join(parsed if parsed else values)
-
-            format_str = f"{{:>{22}}}: {{:<}}"
+            format_str = f"{{}}: {{}}"
             for k, v in object_values.items():
                 print(format_str.format(k, v))
-            print()
 
             if print_synthetic_vars:
                 for part in synthetic_attributes:
