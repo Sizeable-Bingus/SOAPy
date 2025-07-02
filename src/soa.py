@@ -325,7 +325,7 @@ def run_cli():
         help="Adds timestamp to every logging output."
     )
     parser.add_argument(
-        "--hash",
+        "-H", "--hash",
         action="store",
         metavar="nthash",
         help="Use an NT hash for authentication",
@@ -385,10 +385,15 @@ def run_cli():
         help="Raw query to execute on the target",
     )
     enum.add_argument(
-        "--filter",
+        "-f", "--filter",
         action="store",
         metavar="attr,attr,...",
         help="Attributes to select from the objects returned, in a comma seperated list",
+    )
+    enum.add_argument(
+        "-p", "--parse",
+        action="store_true",
+        help="Parse attributes to human readable format",
     )
 
     writing = parser.add_argument_group('Writing')
@@ -549,8 +554,8 @@ def run_cli():
                 attributes: list = [x.strip() for x in options.filter.split(",")]
             else:
                 attributes = None
-                
-            client.pull(current_query, attributes, print_incrementally=True)
+            
+            client.pull(current_query, attributes, print_incrementally=True, parse_values=options.parse)
 
 
 if __name__ == "__main__":
