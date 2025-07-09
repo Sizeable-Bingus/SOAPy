@@ -542,7 +542,7 @@ class ADWSConnect:
                             sid += f" Well known sid: {WELL_KNOWN_SIDS[sid]}"
                         parsed.append(sid)
                 if name in ["objectGUID"]:
-                    parsed = [str(UUID(bytes_le=b64decode(value))) for value in values]
+                    parsed = [str(UUID(bytes_le=b64decode(value))).upper() for value in values]
                 
                 if parse_values:
                     if syntax == "GeneralizedTimeString":
