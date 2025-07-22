@@ -3,6 +3,7 @@ SoaPy is a Proof of Concept (PoC) tool for conducting offensive  interaction wit
 
 SoaPy can be primarily utilized to interact with ADWS for stealthy recon over a proxy into an internal Active Directory environment. Additionally SoaPy can perform targeted DACL-focused post-exploitation over ADWS, including `servicePrincipalName` writing for targeted Kerberoasting, `DON’T_REQ_PREAUTH` writing for targeted ASREP-Roasting, and the ability to write to `msDs-AllowedToActOnBehalfOfOtherIdentity` for Resource-Based Constrained Delegation attacks. 
 
+The protocol structure for interacting with ADWS is shown below:
 ![image](https://github.com/user-attachments/assets/e83a3e60-7aaf-4084-bcab-41e400d4055e)
 
 The blog detailing the original research largely from an engineering perspective can be found [here](https://www.ibm.com/think/x-force/stealthy-enumeration-of-active-directory-environments-through-adws)
