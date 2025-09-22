@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 import socket
 from base64 import b64decode
 from enum import IntFlag
@@ -427,7 +428,9 @@ class ADWSConnect:
         """
 
         if ":Fault>" and ":Reason>" not in xmlstr:
-            return ElementTree.fromstring(xmlstr)
+            _illegal_xml_chars_RE = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
+            xmlstr = xmlstr.replace("&", "?")
+            return ElementTree.fromstring(_illegal_xml_chars_RE.sub('?', xmlstr))
 
         def manually_cut_out_fault(xml_str: str) -> str:
             """cut out the fault text description using
