@@ -1,12 +1,14 @@
 import datetime
 import logging
-import re
 import socket
+import string
 from base64 import b64decode
 from enum import IntFlag
 from typing import Self, Type
 from uuid import UUID, uuid4
 from xml.etree import ElementTree
+#from lxml import etree as ElementTree
+import re
 
 from impacket.ldap.ldaptypes import (
     ACCESS_ALLOWED_ACE,
@@ -428,9 +430,23 @@ class ADWSConnect:
         """
 
         if ":Fault>" and ":Reason>" not in xmlstr:
+
             _illegal_xml_chars_RE = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
             xmlstr = xmlstr.replace("&", "?")
-            return ElementTree.fromstring(_illegal_xml_chars_RE.sub('?', xmlstr))
+            xmlstr = _illegal_xml_chars_RE.sub('?', xmlstr)
+
+            x = list(xmlstr)
+            x_len = len(x) - 1000
+            for i in range(1000, x_len):
+                if x[i] == '<' and (x[i+1] != '/' and x[i+1] != 'a'):
+                    x[i] = '?'
+            
+            xmlstr = "".join(x)
+
+            #with open("errorXML.txt", "w") as f:
+                #f.write(xmlstr)
+
+            return ElementTree.fromstring(xmlstr)
 
         def manually_cut_out_fault(xml_str: str) -> str:
             """cut out the fault text description using
@@ -752,8 +768,15 @@ class ADWSConnect:
             )
 
             for item in et.findall(".//wsen:Items", namespaces=NAMESPACES):
+                #bean = ElementTree.tostring(item)
+                #beanString = bean.decode("utf-8")
+                #beanString = beanString.replace("&gt", "?")
+                #reParse = ElementTree.fromstring(beanString)
                 results.append(item)
 
+                #with open("items.txt", "w") as f:
+                 #   f.write(beanString)
+                 
             if print_incrementally:
                 self._pretty_print_response(et, parse_values=parse_values)
 
